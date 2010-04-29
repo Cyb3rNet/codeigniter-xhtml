@@ -1,3 +1,4 @@
+
 1.0.1
 	Xhtml tag methods have non-mandatory parameters; empty object creation now possible
 	Corrected bug on attribute assembly in MULO class
