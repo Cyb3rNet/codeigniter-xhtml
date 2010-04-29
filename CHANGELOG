@@ -1,0 +1,7 @@
+1.0.1
+	Xhtml tag methods have non-mandatory parameters; empty object creation now possible
+	Corrected bug on attribute assembly in MULO class
+1.0
+	Xhtml class for XHTML markup entity creation and XHTML document generation 
+	MULObject class used to create and generate a markup entity
+	Generates strict XHTML 1.0 documents
