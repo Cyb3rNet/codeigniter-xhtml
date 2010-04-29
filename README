@@ -1,0 +1,51 @@
+codeigniter-xhtml by Serafim Junior Dos Santos Fagundes Cyb3r Network
+
+Version 1.0.1
+
+MIT License
+
+Copyright (c) 2010 Serafim Junior Dos Santos Fagundes Cyb3r Network
+
+--------------------------------------------------------------------------------
+
+codeigniter-xhtml is a library to generate Strict XHTML 1.0 documents for
+codeigniter. The goal of the library is to remove the burden (although it ain't
+one) of switching between HTML and PHP and to give a 100% PHP focus to the 
+coder.
+
+Load the library in the controller.
+
+	$this->load->library('xhtml');
+
+Create the XHTML tags in the views.
+
+	# Create tag <title>
+	$title = $this->xhtml->title("My first document");
+
+	# Append <title>
+	$head = $this->xhtml->head($title);
+
+	$charset = $this->config->item('charset');
+
+	# Create tag <meta> with attributes
+	$attrs = array();
+	$attrs['Content-Type'] = "text/html;charset=".$charset;
+
+	$meta = $this->xhtml->meta($attrs);
+
+	# Append <meta> and return <head>...</head>
+	$head->append($meta);
+
+	# Create tag <h1>
+	$h1 = $this->xhtml->h1("Hello World!");
+
+	# Append <h1>
+	$body->append($h1);
+
+	# Append $head and $body
+	$this->xhtml->doc($head, $body);
+
+	# Generate and echo XHTML document
+	$this->xhtml->output();
+
+
