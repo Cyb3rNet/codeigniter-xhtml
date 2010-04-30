@@ -1,3 +1,4 @@
+
 1.0.2
 	Better error handling; proper for CodeIgniter
 	Content insertion referenced; proper for error/debug tracing
