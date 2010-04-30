@@ -1,4 +1,6 @@
-
+1.0.2
+	Better error handling; proper for CodeIgniter
+	Content insertion referenced; proper for error/debug tracing
 1.0.1
 	Xhtml tag methods have non-mandatory parameters; empty object creation now possible
 	Corrected bug on attribute assembly in MULO class

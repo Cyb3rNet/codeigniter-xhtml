@@ -11,7 +11,7 @@ Copyright (c) 2010 Serafim Junior Dos Santos Fagundes Cyb3r Network
 codeigniter-xhtml is a library to generate Strict XHTML 1.0 documents for
 codeigniter. The goal of the library is to remove the burden (although it ain't
 one) of switching between HTML and PHP and to give a 100% PHP focus to the 
-coder in CodeIgniter views.
+coder.
 
 Load the library in the controller.
 

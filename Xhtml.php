@@ -14,6 +14,24 @@
 
 
 /**
+ *	@name CYB3RNET_CI_XHTML Constant for detection and interaction with other libraries
+ */
+define( 'CYB3RNET_CI_XHTML', '20100429_1' );
+ 
+
+/**
+ *	@name XHTMLSHORTLANG Constant for the hash array of the constructor parameter; key of the document language
+ */
+define( 'XHTMLSHORTLANG', 'short_lang' );
+
+
+/**
+ *	@name XHTMLENCODING Constant for the hash array of the constructor parameter; key of the document encoding
+ */
+define( 'XHTMLENCODING', 'encoding' );
+
+
+/**
  *	Class for generating XHTML documents
  */
 class Xhtml
@@ -43,23 +61,47 @@ class Xhtml
 
 
 	/**
-	 *	@param array $aParam [short_lang] for shortened language name; [encoding] for encoding used
+	 *	@param array $aParams [short_lang] for shortened language name; [encoding] for encoding used
 	 *
 	 *	@access public
 	 */
-	function Xhtml($aParam)
+	function Xhtml( $aParams )
 	{
-		$this->_sLang = $aParam['short_lang'];
-		$this->_sEncoding = $aParam['encoding'];
+		if ( $this->_validate_init_params( $aParams ) )
+		{
+			$this->_sLang = $aParams[XHTMLSHORTLANG];
+			$this->_sEncoding = $aParams[XHTMLENCODING];
+		}
+		else
+		{
+			show_error( 'Instanciation parameters of '.__CLASS__.' are not valid', 500 );
+		}
 	
 		$this->_oCI =& get_instance();
 		
-		$this->_oCI->load->helper('html');
+		$this->_oCI->load->helper( 'html' );
 		
 		$this->_aTags = array();
 		
 		$this->_oDoc = NULL;
 		$this->_sDoc = "";
+	}
+	
+	
+	/**
+	 *	Validates instanciation parameters; returns TRUE on valid, FALSE otherwise
+	 *
+	 *	@param array $aParams Parameters passed in class instanciation
+	 *
+	 *	@access private
+	 *	@return bool
+	 */
+	function _validate_init_params( $aParams )
+	{
+		$bShortLangOK = array_key_exists( XHTMLSHORTLANG, $aParams );
+		$bEncodingOK = array_key_exists( XHTMLENCODING, $aParams );
+		
+		return ( $bShortLangOK && $bEncodingOK );
 	}
 	
 	
@@ -74,22 +116,28 @@ class Xhtml
 	 *	@return object
 	 *	@access private
 	 */
-	function _create_tag($sTagName, $aAttrs, $bHasEnd, $vContent)
+	function _create_tag( $sTagName, $aAttrs, $bHasEnd, $vContent )
 	{
+		if ( ! is_null( $vContent ) )
+			$oMULC = new MULContent( $sTagName, $vContent );
+		else
+			$oMULC = NULL;
+	
 		$oMULO = NULL;
 	
 		if ( array_key_exists( $sTagName, $this->_aTags ) )
 		{
 			$oMULO =& $this->_aTags[$sTagName];
 			
-			if (count($aAttrs) > 0)
-				$oMULO->add_attrs($aAttrs);
+			if ( count( $aAttrs ) > 0 )
+				$oMULO->add_attrs( $aAttrs );
 			
-			$oMULO->append($vContent);
+			if ( ! is_null( $oMULC ) )
+				$oMULO->append( $oMULC );
 		}
 		else
 		{
-			$oMULO = new MULObject($sTagName, $aAttrs, $bHasEnd, $vContent);
+			$oMULO = new MULObject( $sTagName, $aAttrs, $bHasEnd, $oMULC );
 		}
 
 		$this->_aTags[$sTagName] = $oMULO;
@@ -114,10 +162,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function head($vContent = NULL, $aAttrs = array())
+	function head( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 	
 
@@ -130,10 +178,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function title($vContent = NULL, $aAttrs = array())
+	function title( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 	
 
@@ -145,10 +193,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function base($aAttrs = array())
+	function base( $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, NULL);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, NULL );
 	}
 
 
@@ -160,10 +208,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function meta($aAttrs = array())
+	function meta( $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, NULL);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, NULL );
 	}
 
 
@@ -175,10 +223,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function link($aAttrs = array())
+	function link( $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, NULL);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, NULL );
 	}
 
 
@@ -191,10 +239,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function style($vContent = NULL, $aAttrs = array())
+	function style( $vContent = NULL, $aAttrs = array() )
 	{
-		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		$bHasEnd = TRUE;		
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 	/**
@@ -206,10 +254,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function script($vContent = NULL, $aAttrs = array())
+	function script( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 	/**
@@ -221,10 +269,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function noscript($vContent = NULL, $aAttrs = array())
+	function noscript( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -244,10 +292,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function body($vContent = NULL, $aAttrs = array())
+	function body( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -260,10 +308,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function div($vContent = NULL, $aAttrs = array())
+	function div( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -276,10 +324,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function p($vContent = NULL, $aAttrs = array())
+	function p( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -292,10 +340,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function h1($vContent = NULL, $aAttrs = array())
+	function h1( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -308,10 +356,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function h2($vContent = NULL, $aAttrs = array())
+	function h2( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -324,10 +372,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function h3($vContent = NULL, $aAttrs = array())
+	function h3( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -340,10 +388,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function h4($vContent = NULL, $aAttrs = array())
+	function h4( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -356,10 +404,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function h5($vContent = NULL, $aAttrs = array())
+	function h5( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -372,10 +420,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function h6($vContent = NULL, $aAttrs = array())
+	function h6( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -388,10 +436,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function ul($vContent = NULL, $aAttrs = array())
+	function ul( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -404,10 +452,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function ol($vContent = NULL, $aAttrs = array())
+	function ol( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -420,10 +468,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function li($vContent = NULL, $aAttrs = array())
+	function li( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -436,10 +484,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function dl($vContent = NULL, $aAttrs = array())
+	function dl( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -452,10 +500,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function dt($vContent = NULL, $aAttrs = array())
+	function dt( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -468,10 +516,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function dd($vContent = NULL, $aAttrs = array())
+	function dd( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -484,10 +532,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function address($vContent = NULL, $aAttrs = array())
+	function address( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -499,10 +547,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function hr($aAttrs = array())
+	function hr($aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, NULL);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, NULL);
 	}
 
 
@@ -515,10 +563,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function pre($vContent = NULL, $aAttrs = array())
+	function pre( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -533,10 +581,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function blockquote($vContent = NULL, $aAttrs = array())
+	function blockquote( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -549,10 +597,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function ins($vContent = NULL, $aAttrs = array())
+	function ins( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -565,10 +613,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function del($vContent = NULL, $aAttrs = array())
+	function del( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -581,10 +629,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function a($vContent = NULL, $aAttrs = array())
+	function a( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -597,10 +645,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function span($vContent = NULL, $aAttrs = array())
+	function span( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -613,10 +661,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function bdo($vContent = NULL, $aAttrs = array())
+	function bdo( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -628,10 +676,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function br($aAttrs = array())
+	function br( $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, NULL);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, NULL );
 	}
 
 
@@ -644,10 +692,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function em($vContent = NULL, $aAttrs = array())
+	function em( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -660,10 +708,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function strong($vContent = NULL, $aAttrs = array())
+	function strong( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -676,10 +724,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function dfn($vContent = NULL, $aAttrs = array())
+	function dfn( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -692,10 +740,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function code($vContent = NULL, $aAttrs = array())
+	function code( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -708,10 +756,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function samp($vContent = NULL, $aAttrs = array())
+	function samp( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -724,10 +772,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function kbd($vContent = NULL, $aAttrs = array())
+	function kbd( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -742,10 +790,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function x_var($vContent = NULL, $aAttrs = array())
+	function x_var( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -758,10 +806,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function cite($vContent = NULL, $aAttrs = array())
+	function cite( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -774,10 +822,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function abbr($vContent = NULL, $aAttrs = array())
+	function abbr( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -790,10 +838,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function acronym($vContent = NULL, $aAttrs = array())
+	function acronym( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -806,10 +854,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function q($vContent = NULL, $aAttrs = array())
+	function q( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -822,10 +870,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function sub($vContent = NULL, $aAttrs = array())
+	function sub( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -838,10 +886,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function sup($vContent = NULL, $aAttrs = array())
+	function sup( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -854,10 +902,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function tt($vContent = NULL, $aAttrs = array())
+	function tt( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -870,10 +918,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function i($vContent = NULL, $aAttrs = array())
+	function i( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -886,10 +934,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function b($vContent = NULL, $aAttrs = array())
+	function b( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -902,10 +950,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function big($vContent = NULL, $aAttrs = array())
+	function big( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -918,10 +966,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function small($vContent = NULL, $aAttrs = array())
+	function small( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -934,10 +982,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function object($vContent = NULL, $aAttrs = array())
+	function object( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -950,10 +998,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function param($vContent = NULL, $aAttrs = array())
+	function param( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -966,10 +1014,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function img($vContent = NULL, $aAttrs = array())
+	function img( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -982,10 +1030,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function map($vContent = NULL, $aAttrs = array())
+	function map( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -998,10 +1046,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function area($vContent = NULL, $aAttrs = array())
+	function area( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1021,10 +1069,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function form($vContent = NULL, $aAttrs = array())
+	function form( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1037,10 +1085,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function label($vContent = NULL, $aAttrs = array())
+	function label( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1052,10 +1100,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function input($aAttrs = array())
+	function input( $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, NULL);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, NULL );
 	}
 
 
@@ -1068,10 +1116,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function textarea($vContent = NULL, $aAttrs = array())
+	function textarea( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1084,10 +1132,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function select($vContent = NULL, $aAttrs = array())
+	function select( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1100,10 +1148,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function option($vContent = NULL, $aAttrs = array())
+	function option( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1116,10 +1164,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function optgroup($vContent = NULL, $aAttrs = array())
+	function optgroup( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1132,10 +1180,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function fieldset($vContent = NULL, $aAttrs = array())
+	function fieldset( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1148,10 +1196,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function legend($vContent = NULL, $aAttrs = array())
+	function legend( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1164,10 +1212,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function button($vContent = NULL, $aAttrs = array())
+	function button( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1187,10 +1235,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function table($vContent = NULL, $aAttrs = array())
+	function table( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1203,10 +1251,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function caption($vContent = NULL, $aAttrs = array())
+	function caption( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1219,10 +1267,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function thead($vContent = NULL, $aAttrs = array())
+	function thead( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1235,10 +1283,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function tfoot($vContent = NULL, $aAttrs = array())
+	function tfoot( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1251,10 +1299,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function tbody($vContent = NULL, $aAttrs = array())
+	function tbody( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1267,10 +1315,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function colgroup($vContent = NULL, $aAttrs = array())
+	function colgroup( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1282,10 +1330,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function col($aAttrs = array())
+	function col( $aAttrs = array() )
 	{
 		$bHasEnd = FALSE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, NULL);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, NULL );
 	}
 
 
@@ -1298,10 +1346,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function tr($vContent = NULL, $aAttrs = array())
+	function tr( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1314,10 +1362,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function th($vContent = NULL, $aAttrs = array())
+	function th( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1330,10 +1378,10 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function td($vContent = NULL, $aAttrs = array())
+	function td( $vContent = NULL, $aAttrs = array() )
 	{
 		$bHasEnd = TRUE;
-		return $this->_create_tag(__FUNCTION__, $aAttrs, $bHasEnd, $vContent);
+		return $this->_create_tag( __FUNCTION__, $aAttrs, $bHasEnd, $vContent );
 	}
 
 
@@ -1353,15 +1401,15 @@ class Xhtml
 	 *	@return object
 	 *	@access public
 	 */
-	function doc($oHead, $oBody)
+	function doc( $oHead, $oBody )
 	{
 		$aAttrs = array();
 		
 		$aAttrs['lang'] = $this->_sLang;
 	
-		$this->_create_tag("html", $aAttrs, TRUE, $oHead);
+		$this->_create_tag( "html", $aAttrs, TRUE, $oHead );
 		
-		$this->_oDoc = $this->_create_tag("html", array(), TRUE, $oBody);
+		$this->_oDoc = $this->_create_tag( "html", array(), TRUE, $oBody );
 		
 		return $this->_oDoc;
 	}
@@ -1384,7 +1432,7 @@ class Xhtml
 			return $this->_sDoc;
 		}
 		else
-			die( 'You must use the doc method before using output or generate methods' );
+			show_error( 'You must use the <big>doc</big> method before using <big>output</big> or <big>generate</big> methods', 500 );
 	}
 	
 	
@@ -1416,7 +1464,7 @@ class MULObject
 	 *	@param string $sTagName Tag name of the markup object
 	 *	@param array $aAttrs Hash of attributes name/value pairs
 	 *	@param bool $bHasEnd Indicates if markup has end; true for full end, false for self closed
-	 *	@param mixed $vContent Content of the markup; either a MULObject object or a string
+	 *	@param mixed $vContent Content of the markup; either a MULObject object, a MULContent object or a string
 	 *
 	 *	@access public
 	 */
@@ -1430,12 +1478,12 @@ class MULObject
 				
 		if ( count( $aAttrs ) > 0 )
 		{
-			$this->add_attrs($aAttrs);
+			$this->add_attrs( $aAttrs );
 		}
 		
-		if ( ! is_null($vContent) )
+		if ( ! is_null( $vContent ) )
 		{
-			$this->append($vContent);
+			$this->append( $vContent );
 		}
 
 		$this->_sAttrs = "";
@@ -1459,23 +1507,33 @@ class MULObject
 	/**
 	 *	Appends content in the markup
 	 *
-	 *	@param mixed $vContent Content to be appended to the markup; either a MULObject object or a string
+	 *	@param mixed $vContent Content to be appended to the markup; must be a MULObject object, a MULContent object or a string
 	 *
 	 *	@access public
 	 */
 	function append( $vContent )
 	{
-		if ( is_string( $vContent ) )
+		if ( is_a( $vContent, 'MULContent' ) )
+		{
+			$sSource = $vContent->get_source();
+			$vContent = $vContent->get_content();
+		}
+
+		if ( is_null( $vContent ) )
+		{
+			$this->_sContent = "";
+		}
+		else if ( is_string( $vContent ) )
 		{
 			$this->_sContent .= $vContent;
 		}
-		else if ( is_a($vContent, "MULObject") )
+		else if ( is_a( $vContent, 'MULObject' ) )
 		{
 			$this->_sContent .= $vContent->generate();
 		}
 		else
 		{
-			die( "Content to ".__CLASS__." must be a string or an instance of MULObject" );
+			show_error( 'Content inserted in '.$sSource.' must be a <big>string</big> or an object generated by <big>$this->xhtml</big>', 500 );
 		}
 	}
 	
@@ -1489,7 +1547,7 @@ class MULObject
 	 */
 	function add_attrs( $aAttrs )
 	{
-		$this->_aAttrs = array_merge($this->_aAttrs, $aAttrs);
+		$this->_aAttrs = array_merge( $this->_aAttrs, $aAttrs );
 	}
 	
 	
@@ -1518,6 +1576,49 @@ class MULObject
 		}
 	
 		return $sTag;
+	}
+}
+
+
+/**
+ *	Class for holding content reference for MULObject->append()
+ */
+class MULContent
+{
+	/**
+	 *	@param string $sSource Method name inserting the content
+	 *	@param mixed $vContent Content for MULObject; either a MULObject or a string
+	 *
+	 *	@access public
+	 */
+	function MULContent( $sSource = "", $vContent = NULL )
+	{
+		$this->_sSource = $sSource;
+		$this->_vContent = $vContent;
+	}
+	
+	
+	/**
+	 *	Returns the content to be inserted in the MULObject
+	 *
+	 *	@access public
+	 *	@return mixed
+	 */
+	function get_content()
+	{
+		return $this->_vContent;
+	}
+	
+	
+	/**
+	 *	Returns the method name inserting the content
+	 *
+	 *	@access public
+	 *	@return string
+	 */
+	function get_source()
+	{
+		return $this->_sSource;
 	}
 }
 
